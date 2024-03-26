@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\HasImage;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\ProductPostRequest;
+use Illuminate\Auth\Events\Validated;
 
 class ProductController extends Controller
 {
@@ -27,16 +29,6 @@ class ProductController extends Controller
         if ($user) {
             $product_query->where('user_id', $user->id);
         }
-        // if ($request->user()) {
-        //     $user = $request->user();
-        //     $product_query->where('user_id', $user->id);
-        // }
-
-        // check if there is any authenticated user
-        // if (Auth::check()) {
-        //     $user = Auth::user();
-        //     $product_query = $user->products();
-        // }
 
         // search by product name keyword
         if ($request->keyword) {
@@ -94,33 +86,36 @@ class ProductController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(ProductPostRequest $request)
     {
         $user = auth('sanctum')->user();
 
-        $validator = Validator::make($request->all(), [
-            'name' => 'required',
-            'description' => 'required|max:500',
-            'price' => ['required', 'numeric', new NoNegativeValue],
-            'quantity' => ['required', 'integer', new NoNegativeValue],
-            'category_id' => ['required', 'integer', new NoNegativeValue],
-            'brand_id' => ['required', 'integer', new NoNegativeValue],
-            'image' => ['required', 'mimes:jpg,jpeg,png','max:2048'],
-        ]);
+        $validated = $request->validated();
+        // $validator = Validator::make($request->all(), [
+        //     'name' => 'required',
+        //     'description' => 'required|max:500',
+        //     'price' => ['required', 'numeric', new NoNegativeValue],
+        //     'quantity' => ['required', 'integer', new NoNegativeValue],
+        //     'category_id' => ['required', 'integer', new NoNegativeValue],
+        //     'brand_id' => ['required', 'integer', new NoNegativeValue],
+        //     'image' => ['required', 'mimes:jpg,jpeg,png','max:2048'],
+        // ]);
 
-        if ($validator->fails()) {
-            $errors = $validator->errors()->getMessages();
+        // if ($validator->fails()) {
+        //     $errors = $validator->errors()->getMessages();
 
-            return response()->json([
-                'success' => 'false',
-                'errors' => $errors
-            ], 422);
-        }
+        //     return response()->json([
+        //         'success' => 'false',
+        //         'errors' => $errors
+        //     ], 422);
+        // }
 
-        $validated = $validator->safe()->except('image');
+        $image = $validated['image'];
+        unset($validated['image']);
         $validated['user_id'] = $user->id;
 
         $product = Product::create($validated);
+
         $image = $this->uploadImage($request, 'products', $product);
 
         if ($product) {
@@ -137,7 +132,9 @@ class ProductController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $product = Product::find($id);
+
+        return ProductResource::make($product)->withDetail();
     }
 
     /**
@@ -152,7 +149,7 @@ class ProductController extends Controller
             'quantity' => ['required', 'integer', new NoNegativeValue],
             'category_id' => ['required', 'integer', new NoNegativeValue],
             'brand_id' => ['required', 'integer', new NoNegativeValue],
-            'image' => ['nullable','mimes:jpg,jpeg,png','max:2048']
+            'images' => ['nullable','mimes:jpg,jpeg,png','max:2048']
         ]);
 
         if ($validator->fails()) {
@@ -202,7 +199,10 @@ class ProductController extends Controller
             return response()->json(['message' => 'Produk tidak ditemukan'], 404);
         }
 
-        $product->image->delete();
+        if ($product->image) {
+            $product->image->delete();
+        }
+        
         $product->delete();
 
         return response()->json(['message' => 'produk berhasil dihapus.']);
@@ -217,7 +217,11 @@ class ProductController extends Controller
         }
 
         $product->restore();
-        $image = $product->image()->withTrashed();
+
+        if ($product->image) {
+            $image = $product->image()->withTrashed();
+        }
+        
         $image->restore();
 
         return response()->json([
