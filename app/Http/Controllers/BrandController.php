@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\BrandResource;
 use Illuminate\Http\Request;
 use App\Models\Brand;
 use Illuminate\Support\Facades\Validator;
@@ -15,9 +16,31 @@ class BrandController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $brand_query = Brand::with('products');
+
+        if ($request->keyword) {
+            $brand_query->where('name', 'LIKE', '%' . $request->keyword . '%');
+        }
+
+        // sort by
+        if ($request->sortBy && in_array($request->sortBy, ['id', 'name'])) {
+            $sortBy = $request->sortBy;
+        } else {
+            $sortBy = 'id';
+        }
+
+        // sort order
+        if ($request->sortOrder && in_array($request->sortOrder, ['asc', 'desc'])) {
+            $sortOrder = $request->sortOrder;
+        } else {
+            $sortOrder = 'asc';
+        }
+
+        $brands = $brand_query->orderBy($sortBy, $sortOrder)->paginate(3);
+        
+        return BrandResource::collection($brands);
     }
 
     /**
@@ -55,7 +78,9 @@ class BrandController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $brand = Brand::find($id);
+
+        return BrandResource::make($brand)->withDetail();
     }
 
     /**

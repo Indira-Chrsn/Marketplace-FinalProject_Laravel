@@ -18,13 +18,20 @@ class RegisterController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['message' => "Gagal"], 500);
+            $errors = $validator->errors()->getMessages();
+
+            return response()->json([
+                'success' => 'false',
+                'errors' => $errors
+            ], 422);
         }
 
+        $validated = $validator->validated();
+
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password)
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password'])
         ]);
 
         return response()->json([

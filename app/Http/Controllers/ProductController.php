@@ -21,7 +21,16 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
+        $user = auth('sanctum')->user();
         $product_query = Product::with(['category', 'brand', 'user']);
+
+        if ($user) {
+            $product_query->where('user_id', $user->id);
+        }
+        // if ($request->user()) {
+        //     $user = $request->user();
+        //     $product_query->where('user_id', $user->id);
+        // }
 
         // check if there is any authenticated user
         // if (Auth::check()) {
@@ -87,6 +96,8 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        $user = auth('sanctum')->user();
+
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'description' => 'required|max:500',
@@ -94,7 +105,7 @@ class ProductController extends Controller
             'quantity' => ['required', 'integer', new NoNegativeValue],
             'category_id' => ['required', 'integer', new NoNegativeValue],
             'brand_id' => ['required', 'integer', new NoNegativeValue],
-            'image' => ['required', 'mimes:jpg,jpeg,png','max:2048']
+            'image' => ['required', 'mimes:jpg,jpeg,png','max:2048'],
         ]);
 
         if ($validator->fails()) {
@@ -107,6 +118,7 @@ class ProductController extends Controller
         }
 
         $validated = $validator->safe()->except('image');
+        $validated['user_id'] = $user->id;
 
         $product = Product::create($validated);
         $image = $this->uploadImage($request, 'products', $product);
@@ -171,7 +183,6 @@ class ProductController extends Controller
 
         $product->update($validated);
 
-        // image handling
 
         return response()->json([
             'message' => 'Produk berhasil diperbarui.',

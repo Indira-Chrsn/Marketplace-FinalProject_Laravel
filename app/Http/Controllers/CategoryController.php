@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\CategoryResource;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Traits\HasImage;
@@ -15,9 +16,31 @@ class CategoryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $category_query = Category::with('products');
+
+        if ($request->keyword) {
+            $category_query->where('name', 'LIKE', '%' . $request->keyword . '%');
+        }
+
+        // sorted by
+        if ($request->sortBy && in_array($request->sortBy, ['id', 'name'])) {
+            $sortBy = $request->sortBy;
+        } else {
+            $sortBy = 'id';
+        }
+
+        // sort order
+        if ($request->sortOrder && in_array($request->sortOrder, ['asc', 'desc'])) {
+            $sortOrder = $request->sortOrder;
+        } else {
+            $sortOrder = 'asc';
+        }
+
+        $categories = $category_query->orderBy($sortBy, $sortOrder)->paginate(3);
+        
+        return CategoryResource::collection($categories);
     }
 
     /**
@@ -55,7 +78,9 @@ class CategoryController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $category = Category::find($id);
+
+        return CategoryResource::make($category)->withDetail();
     }
 
     /**

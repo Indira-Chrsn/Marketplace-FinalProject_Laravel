@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\CheckUserPermission;
+
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\LoginController;
@@ -21,18 +23,21 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-
 Route::post('register', [RegisterController::class, 'register']);
 Route::post('login', [LoginController::class, 'login']);
+
+Route::group(['middleware' => 'auth:sanctum'], function() {
+    Route::post('logout', [LoginController::class, 'logout']);
+    Route::get('user', [LoginController::class, 'user']);
+});
+
+// Route::post('logout', [LoginController::class, 'logout']);
+// Route::get('user', [LoginController::class, 'user']);
 
 
 Route::post('/product/restore/{id}', [ProductController::class, 'restore']);
 Route::get('/products', [ProductController::class, 'index']);
-Route::resource('/product', ProductController::class);
+// Route::resource('/product', ProductController::class);
 
 
 Route::post('/category/restore/{id}', [CategoryController::class, 'restore']);
@@ -43,3 +48,9 @@ Route::resource('/category', CategoryController::class);
 Route::post('/brand/restore/{id}', [BrandController::class, 'restore']);
 Route::get('/brands', [BrandController::class, 'index']);
 Route::resource('/brand', BrandController::class);
+
+Route::group(['middleware' => 'auth:sanctum'], function() {
+    Route::resource('/product', ProductController::class)->except(['index']);
+    Route::resource('/category', CategoryController::class)->except(['index']);
+    Route::resource('/brand', BrandController::class)->except(['index']);
+});
