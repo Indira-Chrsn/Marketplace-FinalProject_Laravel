@@ -8,6 +8,8 @@
 7. in .env file, change the database name
 8. run php artisan migrate
 
+
 note:
 This is a backend-only project coded with Laravel 10
+
 API Documentation: https://www.notion.so/Simple-Marketplace-API-Documentation-98d9552844444561993fa592ac09901d
