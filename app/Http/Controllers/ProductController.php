@@ -91,24 +91,6 @@ class ProductController extends Controller
         $user = auth('sanctum')->user();
 
         $validated = $request->validated();
-        // $validator = Validator::make($request->all(), [
-        //     'name' => 'required',
-        //     'description' => 'required|max:500',
-        //     'price' => ['required', 'numeric', new NoNegativeValue],
-        //     'quantity' => ['required', 'integer', new NoNegativeValue],
-        //     'category_id' => ['required', 'integer', new NoNegativeValue],
-        //     'brand_id' => ['required', 'integer', new NoNegativeValue],
-        //     'image' => ['required', 'mimes:jpg,jpeg,png','max:2048'],
-        // ]);
-
-        // if ($validator->fails()) {
-        //     $errors = $validator->errors()->getMessages();
-
-        //     return response()->json([
-        //         'success' => 'false',
-        //         'errors' => $errors
-        //     ], 422);
-        // }
 
         $image = $validated['image'];
         unset($validated['image']);
@@ -149,7 +131,7 @@ class ProductController extends Controller
             'quantity' => ['required', 'integer', new NoNegativeValue],
             'category_id' => ['required', 'integer', new NoNegativeValue],
             'brand_id' => ['required', 'integer', new NoNegativeValue],
-            'images' => ['nullable','mimes:jpg,jpeg,png','max:2048']
+            'images' => ['nullable', 'mimes:jpg,jpeg,png', 'max:2048']
         ]);
 
         if ($validator->fails()) {
@@ -202,7 +184,7 @@ class ProductController extends Controller
         if ($product->image) {
             $product->image->delete();
         }
-        
+
         $product->delete();
 
         return response()->json(['message' => 'produk berhasil dihapus.']);
@@ -221,7 +203,7 @@ class ProductController extends Controller
         if ($product->image) {
             $image = $product->image()->withTrashed();
         }
-        
+
         $image->restore();
 
         return response()->json([

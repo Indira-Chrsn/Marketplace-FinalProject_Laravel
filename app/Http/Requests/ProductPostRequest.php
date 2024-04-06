@@ -52,7 +52,6 @@ class ProductPostRequest extends FormRequest
             'brand_id.integer' => 'Brand_id must be in integer value',
             'image.max' => 'Image size should be less than 2mb',
             'image.mimes' => 'Only jpeg, png, jpg files are allowed',
-            // 'images.max' => 'Only 5 images are allowed'
         ];
     }
 

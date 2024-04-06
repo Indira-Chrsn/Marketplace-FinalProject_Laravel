@@ -39,7 +39,7 @@ class CategoryController extends Controller
         }
 
         $categories = $category_query->orderBy($sortBy, $sortOrder)->paginate(3);
-        
+
         return CategoryResource::collection($categories);
     }
 
@@ -120,7 +120,7 @@ class CategoryController extends Controller
         $validated = $validator->safe()->only('name');
 
         $category->update($validated);
-        
+
         return response()->json([
             'message' => 'Kategori berhasil diperbarui',
             'category' => $category,
